@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"
+			   
+			   width="650" height="615"
+			   creationComplete="checkForJSData()">
+	
+	<fx:Script>
+		<![CDATA[
+			
+			//creationComplete="checkForJSData()"
+			
+			import flash.external.ExternalInterface;
+			import org.casalib.util.NumberUtil;
+			
+			import mx.charts.chartClasses.IAxis;
+			import mx.charts.renderers.CircleItemRenderer;
+			import mx.charts.series.LineSeries;
+			import mx.collections.ArrayCollection;
+			import mx.core.IVisualElement;
+			import mx.events.FlexEvent;
+			import mx.graphics.SolidColor;
+			import mx.graphics.Stroke;
+			
+			import spark.components.Image;
+			import spark.components.SkinnableContainer;
+			import spark.primitives.BitmapImage;
+			
+			public var tipo:int;
+			public var minIdade:Number;
+			public var maxIdade:Number;
+			
+			[Embed(source="assets/images/curvas/curva_gestacional.jpg")]
+			public var curvaGestacional:Class;
+			
+			private var curva:BitmapImage;
+			
+			private var js:*;
+			
+			private function montaAtalah():void
+			{
+				var curvaSource:Bitmap = new curvaGestacional();
+				curvaSource.smoothing = true ;
+				
+				var curva:BitmapImage = new BitmapImage();
+				curva.width = 455;
+				curva.height = 648;
+				curva.source = curvaSource;
+				
+				gpGestacional.removeAllElements();
+				gpGestacional.addElement( curva );
+				
+				var minValorX:Number = 6 ;
+				var maxValorX:Number = 40 ;
+				var minValorY:Number = 17 ;
+				var maxValorY:Number = 40 ;
+				var limites:Rectangle = new Rectangle( 49, 30, 353 + 49, 506 + 30 );
+				var raio:int = 5 ;
+				var posicoes:Array = [] ;
+				var pontos:SkinnableContainer = new SkinnableContainer();
+				var g:Graphics = pontos.graphics ;
+				g.clear();
+				g.beginFill( 0x81BAEA );
+				
+//				var c:* = {"semanaGestacional": 19,"antropometria":{"imc": 35.14}};
+
+				var c:* = js;
+				var posX:Number = 0 ;
+				var posY:Number = 0 ;
+				
+				posX = NumberUtil.map( c.semanaGestacional, minValorX, maxValorX, limites.x, limites.width ) ;
+				posY = NumberUtil.map( c.antropometria.imc, minValorY, maxValorY, limites.height, limites.y ) ;
+				
+				g.drawCircle( posX, posY, raio );
+				posicoes.push( new Point( posX, posY ) ) ;
+				g.endFill();
+				
+				if( posicoes.length > 1 )
+				{
+					g.lineStyle( 3, 0x81BAEA );
+					g.moveTo( posicoes[0].x, posicoes[0].y );
+					for (var j:int = 1; j < posicoes.length; j++) 
+					{
+						g.lineTo( posicoes[j].x, posicoes[j].y );
+					}
+					
+				}
+				
+				gpGestacional.addElement( pontos );
+			}
+			
+			protected function init(t:*):void
+			{
+				//t = (t!=false) ? t : {"semanaGestacional": 40,"antropometria":{"imc": 35.14}};
+				js = t;
+				montaAtalah();
+			}
+			
+			private function checkForJSData():void
+			{
+				if(ExternalInterface.available) {
+					try{
+						trace('inside try EI');
+						ExternalInterface.addCallback("mostra", init);
+					}catch(err:Error){
+						trace("An EI error occurred: " + err.message + "\n");
+					}
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Group id="gpGestacional" width="100%" height="100%"></s:Group>
+</s:Application>

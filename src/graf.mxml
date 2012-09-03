@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"
+			   width="650" height="410"
+			   creationComplete="checkForJSData()">
+	
+	<fx:Script>
+		<![CDATA[
+			
+			//creationComplete="checkForJSData()"
+			
+			import flash.external.ExternalInterface;
+			import org.casalib.util.NumberUtil;
+			
+			import mx.charts.chartClasses.IAxis;
+			import mx.charts.renderers.CircleItemRenderer;
+			import mx.charts.series.LineSeries;
+			import mx.collections.ArrayCollection;
+			import mx.core.IVisualElement;
+			import mx.events.FlexEvent;
+			import mx.graphics.SolidColor;
+			import mx.graphics.Stroke;
+			
+			import spark.components.Image;
+			import spark.components.SkinnableContainer;
+			import spark.primitives.BitmapImage;
+			
+			public static const TIPO_PESO:int = 0 ;
+			public static const TIPO_ESTATURA:int = 1 ;
+			public static const TIPO_IMC:int = 2 ;
+			public static const TIPO_PESO_ESTATURA:int = 3 ;
+			
+			public var tipo:int;
+			public var minIdade:Number;
+			public var maxIdade:Number;
+			
+			[Embed(source="assets/images/curvas/estatura_idade_menino_5_19.jpg")]
+			public var estatura_idade_menino_5_19:Class;
+			
+			[Embed(source="assets/images/curvas/imc_idade_menino_0_5.jpg")]
+			public var imc_idade_menino_0_5:Class;
+			
+			[Embed(source="assets/images/curvas/imc_idade_menino_5_19.jpg")]
+			public var imc_idade_menino_5_19:Class;
+			
+			[Embed(source="assets/images/curvas/peso_estatura_menino_0_2.jpg")]
+			public var peso_estatura_menino_0_2:Class;
+			
+			[Embed(source="assets/images/curvas/peso_estatura_menino_2_5.jpg")]
+			public var peso_estatura_menino_2_5:Class;
+			
+			[Embed(source="assets/images/curvas/peso_idade_menino_0_5.jpg")]
+			public var peso_idade_menino_0_5:Class;
+			
+			[Embed(source="assets/images/curvas/peso_idade_menino_5_10.jpg")]
+			public var peso_idade_menino_5_10:Class;
+			
+			[Embed(source="assets/images/curvas/estatura_idade_menina_5_19.jpg")]
+			public var estatura_idade_menina_5_19:Class;
+			
+			[Embed(source="assets/images/curvas/imc_idade_menina_0_5.jpg")]
+			public var imc_idade_menina_0_5:Class;
+			
+			[Embed(source="assets/images/curvas/imc_idade_menina_5_19.jpg")]
+			public var imc_idade_menina_5_19:Class;
+			
+			[Embed(source="assets/images/curvas/peso_estatura_menina_0_2.jpg")]
+			public var peso_estatura_menina_0_2:Class;
+			
+			[Embed(source="assets/images/curvas/peso_estatura_menina_2_5.jpg")]
+			public var peso_estatura_menina_2_5:Class;
+			
+			[Embed(source="assets/images/curvas/peso_idade_menina_0_5.jpg")]
+			public var peso_idade_menina_0_5:Class;
+			
+			[Embed(source="assets/images/curvas/peso_idade_menina_5_10.jpg")]
+			public var peso_idade_menina_5_10:Class;
+			
+			private var curva:BitmapImage;
+			
+			private var js:*;
+			
+			[Bindable]
+			private var corLinhasCrescimento:uint = 0x81BAEA ;
+			
+			public function atualizaCrescimento():void
+			{
+				var p:* = js;
+				var crescimento:ArrayCollection = new ArrayCollection() ;
+				var sexo:String = 'menina';
+				var nomeComplete:String = '';
+				var minValor:Number = 0 ;
+				var maxValor:Number = 0 ;
+				
+				if( p.antropometria.sexo == 'M' ) sexo = 'menino' ;
+				
+				if(tipo == graf.TIPO_PESO)
+				{
+					nomeComplete = 'peso_idade_' + sexo + '_' + minIdade  + '_' + maxIdade ;
+					if( minIdade == 0 ) {
+						minValor = 1 ;
+						maxValor = 25 ;
+					} else {
+						minValor = 13 ;
+						maxValor = sexo == 'menino' ? 45 : 47 ;
+					}
+				}
+				else if(tipo == graf.TIPO_ESTATURA)
+				{
+					nomeComplete = 'estatura_idade_' + sexo + '_' + minIdade  + '_' + maxIdade ;
+					minValor = sexo == 'menino' ? 100 : 95 ;
+					maxValor = sexo == 'menino' ? 195 : 180 ;
+				}
+				else if(tipo == graf.TIPO_IMC)
+				{
+					nomeComplete = 'imc_idade_' + sexo + '_' + minIdade  + '_' + maxIdade ;
+					if( minIdade == 0 ) {
+						minValor = 9.6 ;
+						maxValor = 21.4 ;
+					} else {
+						minValor = 12 ;
+						maxValor = sexo == 'menino' ? 30 : 29.5 ;
+					}
+				}
+				else if(tipo == graf.TIPO_PESO_ESTATURA)
+				{
+					nomeComplete = 'peso_estatura_' + sexo + '_' + minIdade  + '_' + maxIdade ;
+					if( minIdade == 0 ) {
+						minValor = 1 ;
+						maxValor = 23 ;
+					} else {
+						minValor = 5 ;
+						maxValor = sexo == 'menino' ? 28 : 29 ;
+					}
+				}
+				
+				var curvaSource:Bitmap = new this[nomeComplete]();
+				curvaSource.smoothing = true ;
+				
+				curva = new BitmapImage();
+				curva.width = 650;
+				curva.source = curvaSource;
+				
+				gMain.removeAllElements();
+				gMain.addElement( curva );
+				
+				var minMeses:Number = minIdade * 12 ;
+				var maxMeses:Number = maxIdade * 12 ;
+				var minValorX:Number = minMeses ;
+				var maxValorX:Number = maxMeses ;
+				var minValorY:Number = minValor ;
+				var maxValorY:Number = maxValor ;
+				var limites:Rectangle = new Rectangle( 55, 17, 525 + 55, 348 + 17 );
+				var raio:int = 5;
+				var posicoes:Array = [] ;
+				var pontos:SkinnableContainer = new SkinnableContainer();
+				var g:Graphics = pontos.graphics ;
+				g.clear();
+				g.beginFill( corLinhasCrescimento );
+				
+				var c:Object = {"antropometria":js.antropometria};
+				var posX:Number = 0 ;
+				var posY:Number = 0 ;
+				var valorX:Number = c.antropometria.idade;
+				
+				if ( tipo == graf.TIPO_IMC ) 
+				{
+					if( c.antropometria ) {
+						if( ! isNaN(c.antropometria.imc ) && c.antropometria.imc != 0 ) {
+							posY = NumberUtil.map( c.antropometria.imc, minValorY, maxValorY, limites.height, limites.y ) ;
+						}
+					}
+				} else if ( tipo == graf.TIPO_ESTATURA ) {
+					if( c.antropometria ) {
+						if( ! isNaN(c.antropometria.estatura ) && c.antropometria.estatura != 0 ) {
+							posY = NumberUtil.map( c.antropometria.estatura, minValorY, maxValorY, limites.height, limites.y ) ;
+						}
+					}
+				} else if ( tipo == graf.TIPO_PESO ) {
+					if( c.antropometria ) {
+						if( ! isNaN(c.antropometria.peso ) && c.antropometria.peso != 0 ) {
+							posY = NumberUtil.map( c.antropometria.peso, minValorY, maxValorY, limites.height, limites.y ) ;
+						}
+					}
+				} else if ( tipo == graf.TIPO_PESO_ESTATURA ) {
+					if( c.antropometria ) {
+						if( ! isNaN(c.antropometria.estatura ) && c.antropometria.estatura != 0 && ! isNaN(c.antropometria.peso ) && c.antropometria.peso != 0 ) {
+							minValorX = minIdade == 0 ? 45 : 65 ;
+							maxValorX = minIdade == 0 ? 110 : 120 ;
+							
+							posY = NumberUtil.map( c.antropometria.peso, minValorY, maxValorY, limites.height, limites.y ) ;
+							valorX = c.antropometria.estatura ;
+						}
+					}
+				}
+				
+				posX = NumberUtil.map( valorX, minValorX, maxValorX, limites.x, limites.width );
+				
+				trace(posX,posY);
+				
+				g.drawCircle( posX, posY, raio );
+				posicoes.push( new Point( posX, posY ) );
+				
+				g.endFill();
+				
+				if( posicoes.length > 1 )
+				{
+					g.lineStyle( 3, corLinhasCrescimento );
+					g.moveTo( posicoes[0].x, posicoes[0].y );
+					for (var j:int = 1; j < posicoes.length; j++) 
+					{
+						g.lineTo( posicoes[j].x, posicoes[j].y );
+					}
+					
+				}
+				gMain.addElement( pontos );
+			}
+			
+			protected function init(t:*):void
+			{
+				t = (t!=false) ? t : {"tipo": 3,"minIdade": 2,"maxIdade": 5,"antropometria":{"imc": 15.14,"estatura": 112,"peso": 19,"idade": 55,"sexo": "M"}};
+				js = t;
+				tipo = t.tipo;
+				minIdade = t.minIdade;
+				maxIdade = t.maxIdade;
+				
+				if( ! isNaN(tipo) && ! isNaN(minIdade) && ! isNaN(maxIdade) ){
+					atualizaCrescimento();
+				} else {
+					trace( 'something is wrong', tipo, minIdade, maxIdade );
+				}
+			}
+			
+			private function checkForJSData():void
+			{
+				if(ExternalInterface.available) {
+					try{
+						trace('inside try EI');
+						ExternalInterface.addCallback("mostra", init);
+					}catch(err:Error){
+						trace("An EI error occurred: " + err.message + "\n");
+					}
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Group id="gMain" width="100%" height="100%"></s:Group>
+</s:Application>
