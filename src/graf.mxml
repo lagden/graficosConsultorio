@@ -29,7 +29,6 @@
 			public static const TIPO_ESTATURA:int = 1 ;
 			public static const TIPO_IMC:int = 2 ;
 			public static const TIPO_PESO_ESTATURA:int = 3 ;
-			public static const TIPO_COMPRIMENTO_ESTATURA_IDADE:int = 4 ;
 			
 			public var tipo:int;
 			public var minIdade:Number;
@@ -114,10 +113,22 @@
 					}
 				}
 				else if(tipo == graf.TIPO_ESTATURA)
-				{
+				{	
+					
+					//nomeComplete = 'estatura_idade_' + sexo + '_0_5';
 					nomeComplete = 'estatura_idade_' + sexo + '_' + minIdade  + '_' + maxIdade ;
-					minValor = sexo == 'menino' ? 100 : 95 ;
-					maxValor = sexo == 'menino' ? 195 : 180 ;
+					if( minIdade == 0 ) {
+						minValor = 43 ;
+						maxValor = 122 ;
+					} else {
+						minValor = sexo == 'menino' ? 100 : 95 ;
+						maxValor = sexo == 'menino' ? 195 : 180 ;
+					}
+					
+					
+					//nomeComplete = 'estatura_idade_' + sexo + '_' + minIdade  + '_' + maxIdade ;
+					//minValor = sexo == 'menino' ? 100 : 95 ;
+					//maxValor = sexo == 'menino' ? 195 : 180 ;
 				}
 				else if(tipo == graf.TIPO_IMC)
 				{
@@ -139,16 +150,6 @@
 					} else {
 						minValor = 5 ;
 						maxValor = sexo == 'menino' ? 28 : 29 ;
-					}
-				}else if(tipo == graf.TIPO_COMPRIMENTO_ESTATURA_IDADE)
-				{
-					nomeComplete = 'estatura_idade_' + sexo + '_0_5';
-					if( minIdade == 0 ) {
-						minValor = 43 ;
-						maxValor = 122 ;
-					} else {
-						minValor = sexo == 'menino' ? 100 : 95 ;
-						maxValor = sexo == 'menino' ? 195 : 180 ;
 					}
 				}
 				
@@ -236,7 +237,7 @@
 			
 			protected function init(t:*):void
 			{
-				t = (t!=false) ? t : {"tipo": 4,"minIdade": 2,"maxIdade": 5,"antropometria":{"imc": 15.14,"estatura": 112,"peso": 19,"idade": 55,"sexo": "M"}};
+				t = (t!=false) ? t : {"tipo": 1,"minIdade": 0,"maxIdade": 5,"antropometria":{"imc": 15.14,"estatura": 112,"peso": 19,"idade": 55,"sexo": "F"}};
 				js = t;
 				tipo = t.tipo;
 				minIdade = t.minIdade;
